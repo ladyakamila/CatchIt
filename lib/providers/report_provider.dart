@@ -99,6 +99,112 @@ class ReportNotifier extends AsyncNotifier<void> {
       onError(e.toString());
     }
   }
+
+  Future<List<ReportModel>> getAllReports() async {
+    final client = Supabase.instance.client;
+    final data = await client
+        .from('reports_with_details')
+        .select()
+        .order('created_at', ascending: false);
+    return (data as List)
+        .map((e) => ReportModel.fromJson(e as Map<String, dynamic>))
+        .toList();
+  }
+
+  Future<List<ReportModel>> getReportsByStatus(String status) async {
+    final client = Supabase.instance.client;
+    final data = await client
+        .from('reports_with_details')
+        .select()
+        .eq('status', status)
+        .order('created_at', ascending: false);
+    return (data as List)
+        .map((e) => ReportModel.fromJson(e as Map<String, dynamic>))
+        .toList();
+  }
+
+  Future<void> updateReportStatus(String reportId, String status) async {
+    final client = Supabase.instance.client;
+    final user = client.auth.currentUser;
+    if (user == null) return;
+    await client
+        .from('reports')
+        .update({'status': status, 'assigned_to': user.id})
+        .eq('id', reportId);
+  }
+
+  Future<void> uploadRepairPhoto({
+    required String reportId,
+    required List<dynamic> imageFiles,
+    required void Function(String) onProgress,
+    required void Function() onSuccess,
+    required void Function(String) onError,
+  }) async {
+    state = const AsyncValue.loading();
+    final client = Supabase.instance.client;
+    final user = client.auth.currentUser;
+    if (user == null) {
+      onError('Sesi tidak ditemukan, silakan login kembali.');
+      state = const AsyncValue.data(null);
+      return;
+    }
+
+    try {
+      for (int i = 0; i < imageFiles.length; i++) {
+        onProgress(
+          'Mengunggah foto perbaikan ${i + 1} dari ${imageFiles.length}...',
+        );
+        final file = imageFiles[i];
+        final bytes = await file.readAsBytes();
+        final extension = file.path.split('.').last.toLowerCase();
+        final fileName =
+            'repair_${DateTime.now().millisecondsSinceEpoch}_$i.$extension';
+        final path = '${user.id}/$reportId/$fileName';
+
+        await client.storage
+            .from('report-images')
+            .uploadBinary(
+              path,
+              bytes,
+              fileOptions: FileOptions(
+                contentType: extension == 'png' ? 'image/png' : 'image/jpeg',
+              ),
+            );
+
+        final imageUrl = client.storage
+            .from('report-images')
+            .getPublicUrl(path);
+
+        await client.from('report_images').insert({
+          'report_id': reportId,
+          'image_url': imageUrl,
+          'storage_path': path,
+          'order_index': 100 + i,
+        });
+      }
+
+      state = const AsyncValue.data(null);
+      onSuccess();
+    } catch (e) {
+      state = AsyncValue.error(e, StackTrace.current);
+      onError(e.toString());
+    }
+  }
+
+  Future<Map<String, int>> getReportStats() async {
+    final client = Supabase.instance.client;
+    final data = await client.from('reports').select('status');
+    int total = data.length;
+    int menunggu = data.where((e) => e['status'] == 'menunggu').length;
+    int diproses = data.where((e) => e['status'] == 'diproses').length;
+    int selesai = data.where((e) => e['status'] == 'selesai').length;
+    return {
+      'total': total,
+      'menunggu': menunggu,
+      'diproses': diproses,
+      'selesai': selesai,
+    };
+  }
 }
 
 final reportNotifierProvider = AsyncNotifierProvider<ReportNotifier, void>(

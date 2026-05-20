@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import '../../core/theme/app_theme.dart';
 import '../../models/report_model.dart';
+import '../../models/report_image_model.dart';
 import '../../widgets/status_badge.dart';
 
 class ReportDetailScreen extends StatefulWidget {
@@ -16,6 +17,13 @@ class ReportDetailScreen extends StatefulWidget {
 
 class _ReportDetailScreenState extends State<ReportDetailScreen> {
   int _currentImageIndex = 0;
+  final PageController _pageController = PageController();
+
+  @override
+  void dispose() {
+    _pageController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -24,11 +32,14 @@ class _ReportDetailScreenState extends State<ReportDetailScreen> {
         ? DateFormat('d MMMM yyyy, HH:mm', 'id_ID').format(report.createdAt!)
         : '-';
 
+    final damagePhotos = report.images.where((e) => e.orderIndex < 100).toList();
+    final repairPhotos = report.images.where((e) => e.orderIndex >= 100).toList();
+
     return Scaffold(
       backgroundColor: AppTheme.background,
       body: CustomScrollView(
         slivers: [
-          _buildSliverAppBar(report),
+          _buildSliverAppBar(damagePhotos),
           SliverToBoxAdapter(
             child: Padding(
               padding: const EdgeInsets.all(20),
@@ -91,7 +102,7 @@ class _ReportDetailScreenState extends State<ReportDetailScreen> {
                     ),
                   ],
                   // Images
-                  if (report.images.isNotEmpty) ...[
+                  if (damagePhotos.isNotEmpty) ...[
                     const SizedBox(height: 24),
                     const Text(
                       'Foto Kerusakan',
@@ -102,7 +113,20 @@ class _ReportDetailScreenState extends State<ReportDetailScreen> {
                       ),
                     ),
                     const SizedBox(height: 12),
-                    _buildImageGallery(report),
+                    _buildDamageGallery(damagePhotos),
+                  ],
+                  if (repairPhotos.isNotEmpty) ...[
+                    const SizedBox(height: 24),
+                    const Text(
+                      'Foto Hasil Perbaikan',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: AppTheme.textPrimary,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    _buildRepairGallery(repairPhotos),
                   ],
                   const SizedBox(height: 40),
                 ],
@@ -114,9 +138,9 @@ class _ReportDetailScreenState extends State<ReportDetailScreen> {
     );
   }
 
-  Widget _buildSliverAppBar(ReportModel report) {
+  Widget _buildSliverAppBar(List<ReportImageModel> images) {
     return SliverAppBar(
-      expandedHeight: report.images.isNotEmpty ? 280 : 0,
+      expandedHeight: images.isNotEmpty ? 280 : 0,
       pinned: true,
       backgroundColor: AppTheme.surface,
       foregroundColor: AppTheme.textPrimary,
@@ -125,19 +149,52 @@ class _ReportDetailScreenState extends State<ReportDetailScreen> {
         onPressed: () => context.pop(),
       ),
       title: const Text('Detail Laporan'),
-      flexibleSpace: report.images.isNotEmpty
+      flexibleSpace: images.isNotEmpty
           ? FlexibleSpaceBar(
               background: PageView.builder(
-                itemCount: report.images.length,
+                controller: _pageController,
+                itemCount: images.length,
                 onPageChanged: (i) => setState(() => _currentImageIndex = i),
-                itemBuilder: (ctx, i) => Image.network(
-                  report.images[i].imageUrl,
-                  fit: BoxFit.cover,
-                  errorBuilder: (_, __, ___) => const Center(
-                    child: Icon(
-                      Icons.broken_image_outlined,
-                      color: AppTheme.textSecondary,
-                      size: 48,
+                itemBuilder: (ctx, i) => GestureDetector(
+                  onTap: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (context) => Scaffold(
+                          backgroundColor: Colors.black,
+                          appBar: AppBar(
+                            backgroundColor: Colors.black,
+                            iconTheme: const IconThemeData(color: Colors.white),
+                          ),
+                          body: Center(
+                            child: InteractiveViewer(
+                              panEnabled: true,
+                              minScale: 0.5,
+                              maxScale: 4,
+                              child: Hero(
+                                tag: 'photo_${images[i].id}',
+                                child: Image.network(
+                                  images[i].imageUrl,
+                                  fit: BoxFit.contain,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    );
+                  },
+                  child: Hero(
+                    tag: 'photo_${images[i].id}',
+                    child: Image.network(
+                      images[i].imageUrl,
+                      fit: BoxFit.cover,
+                      errorBuilder: (_, __, ___) => const Center(
+                        child: Icon(
+                          Icons.broken_image_outlined,
+                          color: AppTheme.textSecondary,
+                          size: 48,
+                        ),
+                      ),
                     ),
                   ),
                 ),
@@ -147,15 +204,15 @@ class _ReportDetailScreenState extends State<ReportDetailScreen> {
     );
   }
 
-  Widget _buildImageGallery(ReportModel report) {
+  Widget _buildDamageGallery(List<ReportImageModel> images) {
     return Column(
       children: [
         // Page indicator
-        if (report.images.length > 1) ...[
+        if (images.length > 1) ...[
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: List.generate(
-              report.images.length,
+              images.length,
               (i) => Container(
                 margin: const EdgeInsets.symmetric(horizontal: 3),
                 width: _currentImageIndex == i ? 16 : 6,
@@ -176,16 +233,33 @@ class _ReportDetailScreenState extends State<ReportDetailScreen> {
           height: 70,
           child: ListView.separated(
             scrollDirection: Axis.horizontal,
-            itemCount: report.images.length,
+            itemCount: images.length,
             separatorBuilder: (_, __) => const SizedBox(width: 8),
             itemBuilder: (ctx, i) => GestureDetector(
+              onTap: () {
+                _pageController.animateToPage(
+                  i,
+                  duration: const Duration(milliseconds: 300),
+                  curve: Curves.easeInOut,
+                );
+              },
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(8),
-                child: Image.network(
-                  report.images[i].imageUrl,
-                  width: 70,
-                  height: 70,
-                  fit: BoxFit.cover,
+                child: Container(
+                  decoration: BoxDecoration(
+                    border: Border.all(
+                      color: _currentImageIndex == i
+                          ? AppTheme.primary
+                          : Colors.transparent,
+                      width: 2,
+                    ),
+                  ),
+                  child: Image.network(
+                    images[i].imageUrl,
+                    width: 66, // Slightly smaller to account for border
+                    height: 66,
+                    fit: BoxFit.cover,
+                  ),
                 ),
               ),
             ),
@@ -194,6 +268,63 @@ class _ReportDetailScreenState extends State<ReportDetailScreen> {
       ],
     );
   }
+
+  Widget _buildRepairGallery(List<ReportImageModel> images) {
+    return SizedBox(
+      height: 70,
+      child: ListView.separated(
+        scrollDirection: Axis.horizontal,
+        itemCount: images.length,
+        separatorBuilder: (_, __) => const SizedBox(width: 8),
+        itemBuilder: (ctx, i) {
+          final photo = images[i];
+          return GestureDetector(
+            onTap: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (context) => Scaffold(
+                    backgroundColor: Colors.black,
+                    appBar: AppBar(
+                      backgroundColor: Colors.black,
+                      iconTheme: const IconThemeData(color: Colors.white),
+                    ),
+                    body: Center(
+                      child: InteractiveViewer(
+                        panEnabled: true,
+                        minScale: 0.5,
+                        maxScale: 4,
+                        child: Hero(
+                          tag: 'repair_photo_${photo.id}',
+                          child: Image.network(
+                            photo.imageUrl,
+                            fit: BoxFit.contain,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              );
+            },
+            child: Hero(
+              tag: 'repair_photo_${photo.id}',
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(8),
+                child: Image.network(
+                  photo.imageUrl,
+                  width: 70,
+                  height: 70,
+                  fit: BoxFit.cover,
+                ),
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+
 }
 
 class _InfoRow extends StatelessWidget {

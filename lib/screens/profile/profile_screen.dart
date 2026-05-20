@@ -130,31 +130,69 @@ class ProfileScreen extends ConsumerWidget {
           ),
         ),
       ),
-      bottomNavigationBar: NavigationBar(
-        backgroundColor: AppTheme.surface,
-        indicatorColor: AppTheme.primary.withOpacity(0.12),
-        selectedIndex: 2,
-        onDestinationSelected: (index) {
-          if (index == 0) context.go('/home');
-          if (index == 1) context.go('/history');
+      bottomNavigationBar: profileAsync.whenOrNull(
+        data: (profile) {
+          final isAdmin =
+              profile?.role == 'admin' || profile?.role == 'petugas';
+          if (isAdmin) {
+            return BottomNavigationBar(
+              backgroundColor: AppTheme.surface,
+              selectedItemColor: AppTheme.primary,
+              unselectedItemColor: AppTheme.textSecondary,
+              type: BottomNavigationBarType.fixed,
+              elevation: 0,
+              currentIndex: 2,
+              items: const [
+                BottomNavigationBarItem(
+                  icon: Icon(Icons.dashboard_outlined),
+                  activeIcon: Icon(Icons.dashboard),
+                  label: 'Dashboard',
+                ),
+                BottomNavigationBarItem(
+                  icon: Icon(Icons.list_alt_outlined),
+                  activeIcon: Icon(Icons.list_alt),
+                  label: 'Laporan',
+                ),
+                BottomNavigationBarItem(
+                  icon: Icon(Icons.person_outline),
+                  activeIcon: Icon(Icons.person),
+                  label: 'Profil',
+                ),
+              ],
+              onTap: (index) {
+                if (index == 0) context.go('/admin/dashboard');
+                if (index == 1) context.go('/admin/reports');
+              },
+            );
+          }
+          // Warga navigation
+          return NavigationBar(
+            backgroundColor: AppTheme.surface,
+            indicatorColor: AppTheme.primary.withOpacity(0.12),
+            selectedIndex: 2,
+            onDestinationSelected: (index) {
+              if (index == 0) context.go('/home');
+              if (index == 1) context.go('/history');
+            },
+            destinations: const [
+              NavigationDestination(
+                icon: Icon(Icons.home_outlined),
+                selectedIcon: Icon(Icons.home_rounded),
+                label: 'Beranda',
+              ),
+              NavigationDestination(
+                icon: Icon(Icons.history_outlined),
+                selectedIcon: Icon(Icons.history_rounded),
+                label: 'Riwayat',
+              ),
+              NavigationDestination(
+                icon: Icon(Icons.person_outlined),
+                selectedIcon: Icon(Icons.person_rounded),
+                label: 'Profil',
+              ),
+            ],
+          );
         },
-        destinations: const [
-          NavigationDestination(
-            icon: Icon(Icons.home_outlined),
-            selectedIcon: Icon(Icons.home_rounded),
-            label: 'Beranda',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.history_outlined),
-            selectedIcon: Icon(Icons.history_rounded),
-            label: 'Riwayat',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.person_outlined),
-            selectedIcon: Icon(Icons.person_rounded),
-            label: 'Profil',
-          ),
-        ],
       ),
     );
   }

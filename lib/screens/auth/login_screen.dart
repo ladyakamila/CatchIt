@@ -33,7 +33,25 @@ class _LoginScreenState extends State<LoginScreen> {
         email: _emailCtrl.text.trim(),
         password: _passwordCtrl.text,
       );
-      if (mounted) context.go('/home');
+
+      final user = Supabase.instance.client.auth.currentUser;
+      if (user != null) {
+        final profileData = await Supabase.instance.client
+            .from('profiles')
+            .select('role')
+            .eq('id', user.id)
+            .maybeSingle();
+
+        final role = profileData?['role'] as String? ?? 'warga';
+
+        if (mounted) {
+          if (role == 'admin' || role == 'petugas') {
+            context.go('/admin/dashboard');
+          } else {
+            context.go('/home');
+          }
+        }
+      }
     } on AuthException catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
