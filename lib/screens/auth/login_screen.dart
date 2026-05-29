@@ -75,21 +75,22 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppTheme.background,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor, // Ikut gelap otomatis pas Dark Mode
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.symmetric(horizontal: 24),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const SizedBox(height: 60),
-              _buildHeader(),
+              const SizedBox(height: 40), // Ukuran disesuaikan agar pas di layar dan tidak overflow ke bawah
+              _buildHeader(context),
               const SizedBox(height: 40),
-              _buildForm(),
+              _buildForm(context),
               const SizedBox(height: 24),
               _buildLoginButton(),
               const SizedBox(height: 20),
-              _buildRegisterLink(),
+              _buildRegisterLink(context),
+              const SizedBox(height: 20),
             ],
           ),
         ),
@@ -97,38 +98,39 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
-  Widget _buildHeader() {
+  Widget _buildHeader(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const SizedBox(height: 300),
+        const SizedBox(height: 40), // Jarak atas kontainer logo
         Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
             color: AppTheme.primary.withOpacity(0.1),
             borderRadius: BorderRadius.circular(16),
           ),
+          // MENGGANTI LOGO WARNING SEGITIGA MENJADI IKON MEGAFON PELAPORAN YANG CAKEP
           child: const Icon(
-            Icons.report_problem_outlined,
+            Icons.campaign_rounded, 
             color: AppTheme.primary,
             size: 32,
           ),
         ),
         const SizedBox(height: 12),
-        const Text(
+        Text(
           'Selamat Datang di\nCatchIt! 👋',
           style: TextStyle(
             fontSize: 28,
             fontWeight: FontWeight.w700,
-            color: AppTheme.textPrimary,
+            color: Theme.of(context).textTheme.bodyLarge?.color, // Mengikuti tema warna teks utama
           ),
         ),
         const SizedBox(height: 8),
-        const Text(
-          'Masuk untuk melaporkan kerusakan fasilitas umum di sekitar Anda.',
+        Text(
+          'Masuk untuk melaporkan kerusakan fasilitas yang Anda temui.',
           style: TextStyle(
             fontSize: 14,
-            color: AppTheme.textSecondary,
+            color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.6), // Teks deskripsi adaptif
             height: 1.5,
           ),
         ),
@@ -136,7 +138,9 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
-  Widget _buildForm() {
+  Widget _buildForm(BuildContext context) {
+    final bodyColor = Theme.of(context).textTheme.bodyLarge?.color;
+    
     return Form(
       key: _formKey,
       child: Column(
@@ -144,6 +148,7 @@ class _LoginScreenState extends State<LoginScreen> {
           TextFormField(
             controller: _emailCtrl,
             keyboardType: TextInputType.emailAddress,
+            style: TextStyle(color: bodyColor),
             decoration: const InputDecoration(
               labelText: 'Email',
               prefixIcon: Icon(Icons.email_outlined),
@@ -158,6 +163,7 @@ class _LoginScreenState extends State<LoginScreen> {
           TextFormField(
             controller: _passwordCtrl,
             obscureText: _obscurePassword,
+            style: TextStyle(color: bodyColor),
             decoration: InputDecoration(
               labelText: 'Password',
               prefixIcon: const Icon(Icons.lock_outlined),
@@ -198,13 +204,13 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
-  Widget _buildRegisterLink() {
+  Widget _buildRegisterLink(BuildContext context) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        const Text(
+        Text(
           'Belum punya akun? ',
-          style: TextStyle(color: AppTheme.textSecondary),
+          style: TextStyle(color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.6)),
         ),
         GestureDetector(
           onTap: () => context.push('/register'),

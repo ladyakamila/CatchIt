@@ -6,7 +6,6 @@ import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 import '../../core/theme/app_theme.dart';
 import '../../models/report_model.dart';
-import '../../models/report_image_model.dart';
 import '../../providers/report_provider.dart';
 import '../../widgets/status_badge.dart';
 
@@ -51,11 +50,6 @@ class _AdminReportDetailScreenState
             backgroundColor: AppTheme.secondary,
           ),
         );
-        // Actually, we could refresh data by popping, or simply call setState.
-        // For accurate detail viewing, forcing a refresh of the page or just updating local state:
-        // Because report model is passed via extra, it won't refresh automatically unless we fetch again.
-        // I will just pop() or we can let the user pull to refresh if we had implemented a fetch report by id.
-        // I'll pop to previous screen to trigger refresh there, or we can stay. Let's stay and tell user they might need to pull-to-refresh list.
       }
     } catch (e) {
       if (mounted) {
@@ -143,7 +137,6 @@ class _AdminReportDetailScreenState
                   backgroundColor: AppTheme.secondary,
                 ),
               );
-              // Pop to trigger list refresh, because gallery wouldn't update unless we re-fetch the report.
             }
           },
           onError: (err) {
@@ -161,20 +154,20 @@ class _AdminReportDetailScreenState
 
   @override
   Widget build(BuildContext context) {
-    final report = widget.report;
-    final dateStr = report.createdAt != null
-        ? DateFormat('dd MMM yyyy, HH:mm').format(report.createdAt!)
+    final reportData = widget.report;
+    final dateStr = reportData.createdAt != null
+        ? DateFormat('dd MMM yyyy, HH:mm').format(reportData.createdAt!)
         : '-';
 
-    final damagePhotos = report.images
-        .where((e) => e.orderIndex < 100)
-        .toList();
-    final repairPhotos = report.images
-        .where((e) => e.orderIndex >= 100)
-        .toList();
+    final damagePhotos = reportData.images != null 
+        ? reportData.images!.where((e) => e.orderIndex < 100).toList()
+        : [];
+    final repairPhotos = reportData.images != null 
+        ? reportData.images!.where((e) => e.orderIndex >= 100).toList()
+        : [];
 
     return Scaffold(
-      backgroundColor: AppTheme.background,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(title: const Text('Detail Laporan')),
       body: Stack(
         children: [
@@ -183,17 +176,16 @@ class _AdminReportDetailScreenState
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _buildInfoCard(report, dateStr, damagePhotos),
+                _buildInfoCard(reportData, dateStr, damagePhotos),
                 const SizedBox(height: 24),
 
-
                 if (repairPhotos.isNotEmpty) ...[
-                  const Text(
+                  Text(
                     'Foto Hasil Perbaikan',
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w600,
-                      color: AppTheme.textPrimary,
+                      color: Theme.of(context).textTheme.bodyLarge?.color,
                     ),
                   ),
                   const SizedBox(height: 12),
@@ -204,7 +196,7 @@ class _AdminReportDetailScreenState
                 _buildStatusActionPanel(),
                 const SizedBox(height: 24),
 
-                if (_selectedStatus == 'selesai' || report.status == 'selesai')
+                if (_selectedStatus == 'selesai' || reportData.status == 'selesai')
                   _buildRepairUploadPanel(),
 
                 const SizedBox(height: 48),
@@ -217,6 +209,7 @@ class _AdminReportDetailScreenState
               color: Colors.black.withOpacity(0.5),
               alignment: Alignment.center,
               child: Card(
+                color: Theme.of(context).cardColor, // Fixed parameter: menggunakan 'color' bukan 'backgroundColor'
                 margin: const EdgeInsets.symmetric(horizontal: 40),
                 child: Padding(
                   padding: const EdgeInsets.all(24),
@@ -225,7 +218,11 @@ class _AdminReportDetailScreenState
                     children: [
                       const CircularProgressIndicator(),
                       const SizedBox(height: 16),
-                      Text(_uploadProgress, textAlign: TextAlign.center),
+                      Text(
+                        _uploadProgress, 
+                        textAlign: TextAlign.center,
+                        style: TextStyle(color: Theme.of(context).textTheme.bodyMedium?.color),
+                      ),
                     ],
                   ),
                 ),
@@ -236,13 +233,13 @@ class _AdminReportDetailScreenState
     );
   }
 
-  Widget _buildInfoCard(ReportModel report, String dateStr, List<dynamic> damagePhotos) {
+  Widget _buildInfoCard(ReportModel reportData, String dateStr, List<dynamic> damagePhotos) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppTheme.surface,
+        color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppTheme.border),
+        border: Border.all(color: Theme.of(context).dividerColor),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -251,43 +248,43 @@ class _AdminReportDetailScreenState
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                report.categoryName ?? '-',
+                reportData.categoryName ?? '-',
                 style: const TextStyle(
                   color: AppTheme.primary,
                   fontWeight: FontWeight.w500,
                 ),
               ),
               StatusBadge(
-                status: _selectedStatus == report.status
-                    ? report.status
+                status: _selectedStatus == reportData.status
+                    ? reportData.status
                     : _selectedStatus,
               ),
             ],
           ),
           const SizedBox(height: 12),
           Text(
-            report.title,
-            style: const TextStyle(
+            reportData.title,
+            style: TextStyle(
               fontSize: 20,
               fontWeight: FontWeight.w600,
-              color: AppTheme.textPrimary,
+              color: Theme.of(context).textTheme.bodyLarge?.color,
             ),
           ),
           const SizedBox(height: 16),
-          const Text(
+          Text(
             'Deskripsi',
             style: TextStyle(
               fontSize: 14,
               fontWeight: FontWeight.w600,
-              color: AppTheme.textPrimary,
+              color: Theme.of(context).textTheme.bodyLarge?.color,
             ),
           ),
           const SizedBox(height: 4),
           Text(
-            report.description ?? 'Tidak ada deskripsi',
-            style: const TextStyle(
+            reportData.description ?? 'Tidak ada deskripsi',
+            style: TextStyle(
               fontSize: 14,
-              color: AppTheme.textSecondary,
+              color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.6),
               height: 1.5,
             ),
           ),
@@ -296,18 +293,18 @@ class _AdminReportDetailScreenState
             _buildImageGallery(damagePhotos),
           ],
           const SizedBox(height: 16),
-          const Divider(color: AppTheme.border),
+          Divider(color: Theme.of(context).dividerColor),
           const SizedBox(height: 16),
           _buildInfoRow(
             Icons.person_outline,
             'Pelapor',
-            report.reporterName ?? 'Warga',
+            reportData.reporterName ?? 'Warga',
           ),
           const SizedBox(height: 12),
           _buildInfoRow(
             Icons.location_on_outlined,
             'Lokasi',
-            report.address ?? '-',
+            reportData.address ?? '-',
           ),
           const SizedBox(height: 12),
           _buildInfoRow(Icons.access_time, 'Waktu', dateStr),
@@ -320,7 +317,7 @@ class _AdminReportDetailScreenState
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Icon(icon, size: 20, color: AppTheme.textSecondary),
+        Icon(icon, size: 20, color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.5)),
         const SizedBox(width: 8),
         Expanded(
           child: Column(
@@ -328,17 +325,17 @@ class _AdminReportDetailScreenState
             children: [
               Text(
                 label,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 12,
-                  color: AppTheme.textSecondary,
+                  color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.5),
                 ),
               ),
               const SizedBox(height: 2),
               Text(
                 value,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 14,
-                  color: AppTheme.textPrimary,
+                  color: Theme.of(context).textTheme.bodyLarge?.color,
                   fontWeight: FontWeight.w500,
                 ),
               ),
@@ -392,7 +389,7 @@ class _AdminReportDetailScreenState
                 width: 120,
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(12),
-                  color: AppTheme.border,
+                  color: Theme.of(context).dividerColor,
                 ),
                 clipBehavior: Clip.antiAlias,
                 child: Image.network(photo.imageUrl, fit: BoxFit.cover),
@@ -408,37 +405,46 @@ class _AdminReportDetailScreenState
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppTheme.surface,
+        color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppTheme.border),
+        border: Border.all(color: Theme.of(context).dividerColor),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
+          Text(
             'Aksi Admin',
             style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.w600,
-              color: AppTheme.textPrimary,
+              color: Theme.of(context).textTheme.bodyLarge?.color,
             ),
           ),
           const SizedBox(height: 16),
-          const Text('Ubah Status Laporan'),
+          Text(
+            'Ubah Status Laporan',
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w500,
+              color: Theme.of(context).textTheme.bodyLarge?.color,
+            ),
+          ),
           const SizedBox(height: 8),
           DropdownButtonFormField<String>(
             value: _selectedStatus,
+            dropdownColor: Theme.of(context).cardColor,
+            style: TextStyle(color: Theme.of(context).textTheme.bodyLarge?.color),
             decoration: const InputDecoration(
               contentPadding: EdgeInsets.symmetric(
                 horizontal: 16,
                 vertical: 12,
               ),
             ),
-            items: const [
-              DropdownMenuItem(value: 'menunggu', child: Text('Menunggu')),
-              DropdownMenuItem(value: 'diproses', child: Text('Diproses')),
-              DropdownMenuItem(value: 'selesai', child: Text('Selesai')),
-              DropdownMenuItem(value: 'ditolak', child: Text('Ditolak')),
+            items: [
+              DropdownMenuItem(value: 'menunggu', child: Text('Menunggu', style: TextStyle(color: Theme.of(context).textTheme.bodyLarge?.color))),
+              DropdownMenuItem(value: 'diproses', child: Text('Diproses', style: TextStyle(color: Theme.of(context).textTheme.bodyLarge?.color))),
+              DropdownMenuItem(value: 'selesai', child: Text('Selesai', style: TextStyle(color: Theme.of(context).textTheme.bodyLarge?.color))),
+              DropdownMenuItem(value: 'ditolak', child: Text('Ditolak', style: TextStyle(color: Theme.of(context).textTheme.bodyLarge?.color))),
             ],
             onChanged: (val) {
               if (val != null) {
@@ -466,25 +472,25 @@ class _AdminReportDetailScreenState
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppTheme.surface,
+        color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppTheme.border),
+        border: Border.all(color: Theme.of(context).dividerColor),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
+          Text(
             'Upload Foto Perbaikan',
             style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.w600,
-              color: AppTheme.textPrimary,
+              color: Theme.of(context).textTheme.bodyLarge?.color,
             ),
           ),
           const SizedBox(height: 8),
-          const Text(
+          Text(
             'Maksimal 5 foto hasil perbaikan untuk laporan ini.',
-            style: TextStyle(color: AppTheme.textSecondary, fontSize: 12),
+            style: TextStyle(color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.5), fontSize: 12),
           ),
           const SizedBox(height: 16),
           if (_selectedImages.isNotEmpty) _buildSelectedImagesGrid(),
@@ -496,6 +502,8 @@ class _AdminReportDetailScreenState
               label: const Text('Pilih Foto'),
               style: OutlinedButton.styleFrom(
                 minimumSize: const Size.fromHeight(50),
+                foregroundColor: Theme.of(context).textTheme.bodyLarge?.color,
+                side: BorderSide(color: Theme.of(context).dividerColor),
               ),
             ),
           ],
@@ -532,7 +540,7 @@ class _AdminReportDetailScreenState
             Container(
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: AppTheme.border),
+                border: Border.all(color: Theme.of(context).dividerColor),
               ),
               clipBehavior: Clip.antiAlias,
               child: kIsWeb

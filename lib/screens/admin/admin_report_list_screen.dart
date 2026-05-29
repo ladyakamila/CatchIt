@@ -57,14 +57,21 @@ class _AdminReportListScreenState extends ConsumerState<AdminReportListScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppTheme.background,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
         title: const Text('Semua Laporan'),
+        foregroundColor: Theme.of(context).textTheme.bodyLarge?.color,
+        // FIX BARU: Paksa tombol back muncul secara manual menggunakan leading
+        // GANTI KODE LEADING APPBAR KAMU YANG LAMA:
+leading: IconButton(
+  icon: const Icon(Icons.arrow_back_ios_new_rounded),
+  onPressed: () => context.go('/admin/dashboard'), // Menggunakan .go langsung ke dashboard admin
+),
         bottom: TabBar(
           controller: _tabController,
           isScrollable: true,
           labelColor: AppTheme.primary,
-          unselectedLabelColor: AppTheme.textSecondary,
+          unselectedLabelColor: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.5),
           indicatorColor: AppTheme.primary,
           tabs: _tabs.map((t) => Tab(text: t)).toList(),
         ),
@@ -77,7 +84,10 @@ class _AdminReportListScreenState extends ConsumerState<AdminReportListScreen>
           }
           if (snapshot.hasError) {
             return Center(
-              child: Text('Gagal memuat status: ${snapshot.error}'),
+              child: Text(
+                'Gagal memuat status: ${snapshot.error}',
+                style: TextStyle(color: Theme.of(context).textTheme.bodyLarge?.color),
+              ),
             );
           }
 
@@ -90,14 +100,14 @@ class _AdminReportListScreenState extends ConsumerState<AdminReportListScreen>
                   Icon(
                     Icons.inventory_2_outlined,
                     size: 64,
-                    color: AppTheme.textSecondary.withOpacity(0.5),
+                    color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.3),
                   ),
                   const SizedBox(height: 16),
-                  const Text(
+                  Text(
                     'Belum ada laporan',
                     style: TextStyle(
                       fontSize: 16,
-                      color: AppTheme.textSecondary,
+                      color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.6),
                     ),
                   ),
                 ],
@@ -130,9 +140,9 @@ class _AdminReportListScreenState extends ConsumerState<AdminReportListScreen>
                   child: Container(
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
-                      color: AppTheme.surface,
+                      color: Theme.of(context).cardColor,
                       borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: AppTheme.border),
+                      border: Border.all(color: Theme.of(context).dividerColor),
                     ),
                     child: Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -141,7 +151,7 @@ class _AdminReportListScreenState extends ConsumerState<AdminReportListScreen>
                           width: 80,
                           height: 80,
                           decoration: BoxDecoration(
-                            color: AppTheme.border,
+                            color: Theme.of(context).scaffoldBackgroundColor,
                             borderRadius: BorderRadius.circular(12),
                           ),
                           clipBehavior: Clip.antiAlias,
@@ -150,9 +160,9 @@ class _AdminReportListScreenState extends ConsumerState<AdminReportListScreen>
                                   displayImageUrl,
                                   fit: BoxFit.cover,
                                 )
-                              : const Icon(
+                              : Icon(
                                   Icons.image_not_supported,
-                                  color: AppTheme.textSecondary,
+                                  color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.4),
                                 ),
                         ),
                         const SizedBox(width: 16),
@@ -166,10 +176,12 @@ class _AdminReportListScreenState extends ConsumerState<AdminReportListScreen>
                                   Expanded(
                                     child: Text(
                                       report.title,
-                                      style: const TextStyle(
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: TextStyle(
                                         fontSize: 16,
                                         fontWeight: FontWeight.w600,
-                                        color: AppTheme.textPrimary,
+                                        color: Theme.of(context).textTheme.bodyLarge?.color,
                                       ),
                                     ),
                                   ),
@@ -177,8 +189,7 @@ class _AdminReportListScreenState extends ConsumerState<AdminReportListScreen>
                               ),
                               const SizedBox(height: 4),
                               Text(
-                                report.categoryName ??
-                                    'Kategori tidak diketahui',
+                                report.categoryName ?? 'Kategori tidak diketahui',
                                 style: const TextStyle(
                                   fontSize: 12,
                                   color: AppTheme.primary,
@@ -188,9 +199,9 @@ class _AdminReportListScreenState extends ConsumerState<AdminReportListScreen>
                               const SizedBox(height: 4),
                               Text(
                                 'Oleh: ${report.reporterName ?? 'Warga'} \u2022 $dateStr',
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontSize: 12,
-                                  color: AppTheme.textSecondary,
+                                  color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.6),
                                 ),
                               ),
                               const SizedBox(height: 8),
@@ -203,9 +214,9 @@ class _AdminReportListScreenState extends ConsumerState<AdminReportListScreen>
                                       report.address ?? 'Tidak ada alamat',
                                       maxLines: 1,
                                       overflow: TextOverflow.ellipsis,
-                                      style: const TextStyle(
+                                      style: TextStyle(
                                         fontSize: 12,
-                                        color: AppTheme.textSecondary,
+                                        color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.5),
                                       ),
                                     ),
                                   ),

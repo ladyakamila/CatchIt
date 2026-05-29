@@ -36,10 +36,10 @@ class _ReportDetailScreenState extends State<ReportDetailScreen> {
     final repairPhotos = report.images.where((e) => e.orderIndex >= 100).toList();
 
     return Scaffold(
-      backgroundColor: AppTheme.background,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor, // Background otomatis adaptif
       body: CustomScrollView(
         slivers: [
-          _buildSliverAppBar(damagePhotos),
+          _buildSliverAppBar(context, damagePhotos),
           SliverToBoxAdapter(
             child: Padding(
               padding: const EdgeInsets.all(20),
@@ -53,9 +53,9 @@ class _ReportDetailScreenState extends State<ReportDetailScreen> {
                       StatusBadge(status: report.status),
                       Text(
                         dateStr,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 12,
-                          color: AppTheme.textSecondary,
+                          color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.6),
                         ),
                       ),
                     ],
@@ -64,10 +64,10 @@ class _ReportDetailScreenState extends State<ReportDetailScreen> {
                   // Title
                   Text(
                     report.title,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 20,
                       fontWeight: FontWeight.w700,
-                      color: AppTheme.textPrimary,
+                      color: Theme.of(context).textTheme.bodyLarge?.color,
                     ),
                   ),
                   const SizedBox(height: 12),
@@ -83,20 +83,20 @@ class _ReportDetailScreenState extends State<ReportDetailScreen> {
                   if (report.description != null &&
                       report.description!.isNotEmpty) ...[
                     const SizedBox(height: 16),
-                    const Text(
+                    Text(
                       'Deskripsi',
                       style: TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w600,
-                        color: AppTheme.textPrimary,
+                        color: Theme.of(context).textTheme.bodyLarge?.color,
                       ),
                     ),
                     const SizedBox(height: 8),
                     Text(
                       report.description!,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 14,
-                        color: AppTheme.textSecondary,
+                        color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.7),
                         height: 1.6,
                       ),
                     ),
@@ -104,12 +104,12 @@ class _ReportDetailScreenState extends State<ReportDetailScreen> {
                   // Images
                   if (damagePhotos.isNotEmpty) ...[
                     const SizedBox(height: 24),
-                    const Text(
+                    Text(
                       'Foto Kerusakan',
                       style: TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w600,
-                        color: AppTheme.textPrimary,
+                        color: Theme.of(context).textTheme.bodyLarge?.color,
                       ),
                     ),
                     const SizedBox(height: 12),
@@ -117,12 +117,12 @@ class _ReportDetailScreenState extends State<ReportDetailScreen> {
                   ],
                   if (repairPhotos.isNotEmpty) ...[
                     const SizedBox(height: 24),
-                    const Text(
+                    Text(
                       'Foto Hasil Perbaikan',
                       style: TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w600,
-                        color: AppTheme.textPrimary,
+                        color: Theme.of(context).textTheme.bodyLarge?.color,
                       ),
                     ),
                     const SizedBox(height: 12),
@@ -138,12 +138,12 @@ class _ReportDetailScreenState extends State<ReportDetailScreen> {
     );
   }
 
-  Widget _buildSliverAppBar(List<ReportImageModel> images) {
+  Widget _buildSliverAppBar(BuildContext context, List<ReportImageModel> images) {
     return SliverAppBar(
       expandedHeight: images.isNotEmpty ? 280 : 0,
       pinned: true,
-      backgroundColor: AppTheme.surface,
-      foregroundColor: AppTheme.textPrimary,
+      backgroundColor: Theme.of(context).cardColor, // Mengikuti warna bar atas dinamis
+      foregroundColor: Theme.of(context).textTheme.bodyLarge?.color,
       leading: IconButton(
         icon: const Icon(Icons.arrow_back_ios_new_rounded),
         onPressed: () => context.pop(),
@@ -188,10 +188,10 @@ class _ReportDetailScreenState extends State<ReportDetailScreen> {
                     child: Image.network(
                       images[i].imageUrl,
                       fit: BoxFit.cover,
-                      errorBuilder: (_, __, ___) => const Center(
+                      errorBuilder: (_, __, ___) => Center(
                         child: Icon(
                           Icons.broken_image_outlined,
-                          color: AppTheme.textSecondary,
+                          color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.4),
                           size: 48,
                         ),
                       ),
@@ -220,7 +220,7 @@ class _ReportDetailScreenState extends State<ReportDetailScreen> {
                 decoration: BoxDecoration(
                   color: _currentImageIndex == i
                       ? AppTheme.primary
-                      : AppTheme.border,
+                      : Theme.of(context).dividerColor,
                   borderRadius: BorderRadius.circular(3),
                 ),
               ),
@@ -256,7 +256,7 @@ class _ReportDetailScreenState extends State<ReportDetailScreen> {
                   ),
                   child: Image.network(
                     images[i].imageUrl,
-                    width: 66, // Slightly smaller to account for border
+                    width: 66, 
                     height: 66,
                     fit: BoxFit.cover,
                   ),
@@ -323,8 +323,6 @@ class _ReportDetailScreenState extends State<ReportDetailScreen> {
       ),
     );
   }
-
-
 }
 
 class _InfoRow extends StatelessWidget {
@@ -338,14 +336,14 @@ class _InfoRow extends StatelessWidget {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Icon(icon, size: 16, color: AppTheme.textSecondary),
+        Icon(icon, size: 16, color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.5)),
         const SizedBox(width: 6),
         Expanded(
           child: Text(
             text,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 14,
-              color: AppTheme.textSecondary,
+              color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.6),
               height: 1.5,
             ),
           ),

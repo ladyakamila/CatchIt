@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../core/theme/app_theme.dart';
+import '../../core/theme/theme_provider.dart'; 
 import '../../providers/auth_provider.dart';
 import '../../providers/profile_provider.dart';
 
@@ -13,9 +14,12 @@ class ProfileScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final profileAsync = ref.watch(profileProvider);
     final user = ref.watch(currentUserProvider);
+    
+    // Membaca status tema aktif dari Riverpod
+    final themeMode = ref.watch(themeProvider);
 
     return Scaffold(
-      backgroundColor: AppTheme.background,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(title: const Text('Profil Saya')),
       body: profileAsync.when(
         data: (profile) {
@@ -28,40 +32,41 @@ class ProfileScreen extends ConsumerWidget {
                 const SizedBox(height: 16),
                 Text(
                   profile?.fullName ?? 'Pengguna',
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 22,
                     fontWeight: FontWeight.w700,
-                    color: AppTheme.textPrimary,
+                    color: Theme.of(context).textTheme.bodyLarge?.color,
                   ),
                 ),
                 const SizedBox(height: 4),
                 Text(
                   user?.email ?? '-',
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 14,
-                    color: AppTheme.textSecondary,
+                    color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.6),
                   ),
                 ),
                 const SizedBox(height: 32),
-                const Align(
+                Align(
                   alignment: Alignment.centerLeft,
                   child: Text(
                     'INFORMASI AKUN',
                     style: TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.bold,
-                      color: AppTheme.textSecondary,
+                      color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.5),
                       letterSpacing: 1.2,
                     ),
                   ),
                 ),
                 const SizedBox(height: 12),
-                // Info cards as action tiles
+                
+                // Info Cards Container
                 Container(
                   decoration: BoxDecoration(
-                    color: AppTheme.surface,
+                    color: Theme.of(context).cardColor,
                     borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: AppTheme.border),
+                    border: Border.all(color: Theme.of(context).dividerColor),
                   ),
                   child: Column(
                     children: [
@@ -72,23 +77,22 @@ class ProfileScreen extends ConsumerWidget {
                         onTap: () =>
                             _showEditProfileModal(context, ref, profile),
                       ),
-                      const Divider(
+                      Divider(
                         height: 1,
                         indent: 56,
-                        color: AppTheme.border,
+                        color: Theme.of(context).dividerColor,
                       ),
                       _ActionTile(
                         icon: Icons.email_outlined,
                         label: 'Email',
                         value: user?.email ?? '-',
-                        onTap:
-                            null, // Email typically read-only or handled differently
+                        onTap: null, 
                         showArrow: false,
                       ),
-                      const Divider(
+                      Divider(
                         height: 1,
                         indent: 56,
-                        color: AppTheme.border,
+                        color: Theme.of(context).dividerColor,
                       ),
                       _ActionTile(
                         icon: Icons.phone_outlined,
@@ -101,8 +105,66 @@ class ProfileScreen extends ConsumerWidget {
                     ],
                   ),
                 ),
+                const SizedBox(height: 24),
+                
+                // PENGATURAN APLIKASI
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    'PENGATURAN APLIKASI',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                      color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.5),
+                      letterSpacing: 1.2,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Container(
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).cardColor,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: Theme.of(context).dividerColor),
+                  ),
+                  child: ListTile(
+                    leading: Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: Colors.amber.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Icon(
+                        themeMode == ThemeMode.dark 
+                            ? Icons.dark_mode_rounded 
+                            : Icons.light_mode_rounded, 
+                        color: Colors.amber, 
+                        size: 20
+                      ),
+                    ),
+                    title: Text(
+                      'Mode Gelap',
+                      style: TextStyle(
+                        fontSize: 14, 
+                        fontWeight: FontWeight.w600,
+                        color: Theme.of(context).textTheme.bodyLarge?.color,
+                      ),
+                    ),
+                    trailing: Switch(
+                      value: themeMode == ThemeMode.dark,
+                      activeColor: AppTheme.primary,
+                      onChanged: (isDark) {
+                        ref.read(themeProvider.notifier).setThemeMode(
+                              isDark ? ThemeMode.dark : ThemeMode.light,
+                            );
+                      },
+                    ),
+                  ),
+                ),
+                
                 const SizedBox(height: 32),
-                // Logout button
+                
+                // Logout Button Container
                 Container(
                   decoration: BoxDecoration(
                     color: AppTheme.danger,
@@ -111,8 +173,8 @@ class ProfileScreen extends ConsumerWidget {
                   child: _ActionTile(
                     icon: Icons.logout_rounded,
                     label: 'Keluar Akun',
-                    iconColor: AppTheme.surface,
-                    textColor: AppTheme.surface,
+                    iconColor: Colors.white,
+                    textColor: Colors.white,
                     onTap: () => _confirmLogout(context, ref),
                     showArrow: false,
                     isLast: true,
@@ -136,9 +198,9 @@ class ProfileScreen extends ConsumerWidget {
               profile?.role == 'admin' || profile?.role == 'petugas';
           if (isAdmin) {
             return BottomNavigationBar(
-              backgroundColor: AppTheme.surface,
+              backgroundColor: Theme.of(context).cardColor,
               selectedItemColor: AppTheme.primary,
-              unselectedItemColor: AppTheme.textSecondary,
+              unselectedItemColor: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.4),
               type: BottomNavigationBarType.fixed,
               elevation: 0,
               currentIndex: 2,
@@ -167,27 +229,27 @@ class ProfileScreen extends ConsumerWidget {
           }
           // Warga navigation
           return NavigationBar(
-            backgroundColor: AppTheme.surface,
+            backgroundColor: Theme.of(context).cardColor,
             indicatorColor: AppTheme.primary.withOpacity(0.12),
             selectedIndex: 2,
             onDestinationSelected: (index) {
               if (index == 0) context.go('/home');
               if (index == 1) context.go('/history');
             },
-            destinations: const [
+            destinations: [
               NavigationDestination(
-                icon: Icon(Icons.home_outlined),
-                selectedIcon: Icon(Icons.home_rounded),
+                icon: Icon(Icons.home_outlined, color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.6)),
+                selectedIcon: const Icon(Icons.home_rounded, color: AppTheme.primary),
                 label: 'Beranda',
               ),
               NavigationDestination(
-                icon: Icon(Icons.history_outlined),
-                selectedIcon: Icon(Icons.history_rounded),
+                icon: Icon(Icons.history_outlined, color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.6)),
+                selectedIcon: const Icon(Icons.history_rounded, color: AppTheme.primary),
                 label: 'Riwayat',
               ),
               NavigationDestination(
-                icon: Icon(Icons.person_outlined),
-                selectedIcon: Icon(Icons.person_rounded),
+                icon: Icon(Icons.person_outline, color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.6)),
+                selectedIcon: const Icon(Icons.person_rounded, color: AppTheme.primary),
                 label: 'Profil',
               ),
             ],
@@ -207,7 +269,7 @@ class ProfileScreen extends ConsumerWidget {
       backgroundColor: AppTheme.primary.withOpacity(0.15),
       backgroundImage: avatarUrl != null ? NetworkImage(avatarUrl) : null,
       child: avatarUrl == null
-          ? Text(
+          ? Text( // const di depan Text ini sudah dibuang untuk mengatasi error compilation
               initials,
               style: const TextStyle(
                 fontSize: 26,
@@ -269,7 +331,7 @@ class ProfileScreen extends ConsumerWidget {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: AppTheme.background,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
@@ -366,12 +428,12 @@ class _EditProfileFormState extends State<_EditProfileForm> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Text(
+                Text(
                   'Edit Profil',
                   style: TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.w700,
-                    color: AppTheme.textPrimary,
+                    color: Theme.of(context).textTheme.bodyLarge?.color,
                   ),
                 ),
                 IconButton(
@@ -384,6 +446,7 @@ class _EditProfileFormState extends State<_EditProfileForm> {
             TextFormField(
               controller: _nameCtrl,
               textCapitalization: TextCapitalization.words,
+              style: TextStyle(color: Theme.of(context).textTheme.bodyLarge?.color),
               decoration: const InputDecoration(
                 labelText: 'Nama Lengkap',
                 prefixIcon: Icon(Icons.person_outline),
@@ -395,6 +458,7 @@ class _EditProfileFormState extends State<_EditProfileForm> {
             TextFormField(
               controller: _phoneCtrl,
               keyboardType: TextInputType.phone,
+              style: TextStyle(color: Theme.of(context).textTheme.bodyLarge?.color),
               decoration: const InputDecoration(
                 labelText: 'Nomor Telepon',
                 prefixIcon: Icon(Icons.phone_outlined),
@@ -428,7 +492,7 @@ class _ActionTile extends StatelessWidget {
   final bool showArrow;
   final bool isLast;
   final Color iconColor;
-  final Color textColor;
+  final Color? textColor;
   final VoidCallback? onTap;
 
   const _ActionTile({
@@ -438,12 +502,14 @@ class _ActionTile extends StatelessWidget {
     this.showArrow = true,
     this.isLast = false,
     this.iconColor = AppTheme.primary,
-    this.textColor = AppTheme.textPrimary,
+    this.textColor,
     this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
+    final finalTextColor = textColor ?? Theme.of(context).textTheme.bodyLarge?.color;
+
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(isLast ? 16 : 0),
@@ -469,16 +535,16 @@ class _ActionTile extends StatelessWidget {
                     style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
-                      color: textColor,
+                      color: finalTextColor,
                     ),
                   ),
                   if (value != null) ...[
                     const SizedBox(height: 2),
                     Text(
                       value!,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 12,
-                        color: AppTheme.textSecondary,
+                        color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.6),
                       ),
                     ),
                   ],
@@ -486,9 +552,9 @@ class _ActionTile extends StatelessWidget {
               ),
             ),
             if (showArrow)
-              const Icon(
+              Icon(
                 Icons.chevron_right_rounded,
-                color: AppTheme.textSecondary,
+                color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.4),
                 size: 20,
               ),
           ],

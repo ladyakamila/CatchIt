@@ -15,7 +15,7 @@ class HistoryScreen extends ConsumerWidget {
     final reportsAsync = ref.watch(userReportsProvider);
 
     return Scaffold(
-      backgroundColor: AppTheme.background,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
         title: const Text('Riwayat Laporan'),
         actions: [
@@ -55,7 +55,7 @@ class HistoryScreen extends ConsumerWidget {
               const SizedBox(height: 12),
               Text(
                 'Gagal memuat data\n$e',
-                style: const TextStyle(color: AppTheme.textSecondary),
+                style: TextStyle(color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.6)),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 16),
@@ -89,18 +89,18 @@ class HistoryScreen extends ConsumerWidget {
             ),
           ),
           const SizedBox(height: 16),
-          const Text(
+          Text(
             'Belum Ada Laporan',
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.w600,
-              color: AppTheme.textPrimary,
+              color: Theme.of(context).textTheme.bodyLarge?.color,
             ),
           ),
           const SizedBox(height: 8),
-          const Text(
+          Text(
             'Laporan yang Anda buat akan muncul di sini.',
-            style: TextStyle(color: AppTheme.textSecondary, fontSize: 14),
+            style: TextStyle(color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.6), fontSize: 14),
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 24),
@@ -116,27 +116,27 @@ class HistoryScreen extends ConsumerWidget {
 
   Widget _buildBottomNav(BuildContext context) {
     return NavigationBar(
-      backgroundColor: AppTheme.surface,
+      backgroundColor: Theme.of(context).cardColor,
       indicatorColor: AppTheme.primary.withOpacity(0.12),
       selectedIndex: 1,
       onDestinationSelected: (index) {
         if (index == 0) context.go('/home');
         if (index == 2) context.go('/profile');
       },
-      destinations: const [
+      destinations: [
         NavigationDestination(
-          icon: Icon(Icons.home_outlined),
-          selectedIcon: Icon(Icons.home_rounded),
+          icon: Icon(Icons.home_outlined, color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.6)),
+          selectedIcon: const Icon(Icons.home_rounded, color: AppTheme.primary),
           label: 'Beranda',
         ),
         NavigationDestination(
-          icon: Icon(Icons.history_outlined),
-          selectedIcon: Icon(Icons.history_rounded),
+          icon: Icon(Icons.history_outlined, color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.6)),
+          selectedIcon: const Icon(Icons.history_rounded, color: AppTheme.primary),
           label: 'Riwayat',
         ),
         NavigationDestination(
-          icon: Icon(Icons.person_outlined),
-          selectedIcon: Icon(Icons.person_rounded),
+          icon: Icon(Icons.person_outline, color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.6)),
+          selectedIcon: const Icon(Icons.person_rounded, color: AppTheme.primary),
           label: 'Profil',
         ),
       ],
@@ -160,9 +160,9 @@ class _ReportCard extends StatelessWidget {
       onTap: onTap,
       child: Container(
         decoration: BoxDecoration(
-          color: AppTheme.surface,
+          color: Theme.of(context).cardColor,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: AppTheme.border),
+          border: Border.all(color: Theme.of(context).dividerColor),
         ),
         child: Row(
           children: [
@@ -178,9 +178,9 @@ class _ReportCard extends StatelessWidget {
                       width: 90,
                       height: 90,
                       fit: BoxFit.cover,
-                      errorBuilder: (_, __, ___) => _placeholder(),
+                      errorBuilder: (_, __, ___) => _placeholder(context),
                     )
-                  : _placeholder(),
+                  : _placeholder(context),
             ),
             // Content
             Expanded(
@@ -191,10 +191,10 @@ class _ReportCard extends StatelessWidget {
                   children: [
                     Text(
                       report.title,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w600,
-                        color: AppTheme.textPrimary,
+                        color: Theme.of(context).textTheme.bodyLarge?.color,
                       ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
@@ -203,18 +203,18 @@ class _ReportCard extends StatelessWidget {
                       const SizedBox(height: 4),
                       Row(
                         children: [
-                          const Icon(
+                          Icon(
                             Icons.location_on_outlined,
                             size: 12,
-                            color: AppTheme.textSecondary,
+                            color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.5),
                           ),
                           const SizedBox(width: 2),
                           Expanded(
                             child: Text(
                               report.address!,
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 11,
-                                color: AppTheme.textSecondary,
+                                color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.5),
                               ),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
@@ -230,9 +230,9 @@ class _ReportCard extends StatelessWidget {
                         StatusBadge(status: report.status),
                         Text(
                           dateStr,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 11,
-                            color: AppTheme.textSecondary,
+                            color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.5),
                           ),
                         ),
                       ],
@@ -247,14 +247,14 @@ class _ReportCard extends StatelessWidget {
     );
   }
 
-  Widget _placeholder() {
+  Widget _placeholder(BuildContext context) {
     return Container(
       width: 90,
       height: 90,
-      color: AppTheme.background,
-      child: const Icon(
+      color: Theme.of(context).scaffoldBackgroundColor,
+      child: Icon(
         Icons.image_not_supported_outlined,
-        color: AppTheme.textSecondary,
+        color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.4),
         size: 28,
       ),
     );

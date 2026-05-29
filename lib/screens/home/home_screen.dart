@@ -15,7 +15,7 @@ class HomeScreen extends ConsumerWidget {
     final reportsAsync = ref.watch(userReportsProvider);
 
     return Scaffold(
-      backgroundColor: AppTheme.background,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: SafeArea(
         child: RefreshIndicator(
           onRefresh: () async {
@@ -28,9 +28,9 @@ class HomeScreen extends ConsumerWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 _buildTopBar(context, ref),
-                _buildGreeting(profileAsync),
+                _buildGreeting(context, profileAsync),
                 const SizedBox(height: 24),
-                _buildSummaryCards(reportsAsync),
+                _buildSummaryCards(context, reportsAsync),
                 const SizedBox(height: 24),
                 _buildReportButton(context),
                 const SizedBox(height: 32),
@@ -57,10 +57,11 @@ class HomeScreen extends ConsumerWidget {
                   color: AppTheme.primary.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(10),
                 ),
+                // SUKSES MENGGANTI IKON SEGITIGA WARNING MENJADI IKON MEGAFON PELAPORAN YANG PREMIUM
                 child: const Icon(
-                  Icons.report_problem_outlined,
+                  Icons.campaign_rounded,
                   color: AppTheme.primary,
-                  size: 20,
+                  size: 22,
                 ),
               ),
               const SizedBox(width: 10),
@@ -76,7 +77,7 @@ class HomeScreen extends ConsumerWidget {
           ),
           IconButton(
             icon: const Icon(Icons.notifications_outlined),
-            color: AppTheme.textSecondary,
+            color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.6),
             onPressed: () {},
           ),
         ],
@@ -84,7 +85,7 @@ class HomeScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildGreeting(AsyncValue profileAsync) {
+  Widget _buildGreeting(BuildContext context, AsyncValue profileAsync) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
       child: profileAsync.when(
@@ -95,41 +96,44 @@ class HomeScreen extends ConsumerWidget {
             children: [
               Text(
                 'Halo, $name 👋',
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 24,
                   fontWeight: FontWeight.w700,
-                  color: AppTheme.textPrimary,
+                  color: Theme.of(context).textTheme.bodyLarge?.color,
                 ),
               ),
               const SizedBox(height: 4),
-              const Text(
+              Text(
                 'Laporkan kerusakan fasilitas di sekitar Anda',
-                style: TextStyle(fontSize: 14, color: AppTheme.textSecondary),
+                style: TextStyle(
+                  fontSize: 14, 
+                  color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.6)
+                ),
               ),
             ],
           );
         },
-        loading: () => const Text(
+        loading: () => Text(
           'Halo 👋',
           style: TextStyle(
             fontSize: 24,
             fontWeight: FontWeight.w700,
-            color: AppTheme.textPrimary,
+            color: Theme.of(context).textTheme.bodyLarge?.color,
           ),
         ),
-        error: (_, __) => const Text(
+        error: (_, __) => Text(
           'Halo 👋',
           style: TextStyle(
             fontSize: 24,
             fontWeight: FontWeight.w700,
-            color: AppTheme.textPrimary,
+            color: Theme.of(context).textTheme.bodyLarge?.color,
           ),
         ),
       ),
     );
   }
 
-  Widget _buildSummaryCards(AsyncValue<List<ReportModel>> reportsAsync) {
+  Widget _buildSummaryCards(BuildContext context, AsyncValue<List<ReportModel>> reportsAsync) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 24),
       child: reportsAsync.when(
@@ -142,12 +146,12 @@ class HomeScreen extends ConsumerWidget {
           return Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
+              Text(
                 'Ringkasan Laporan',
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w600,
-                  color: AppTheme.textPrimary,
+                  color: Theme.of(context).textTheme.bodyLarge?.color,
                 ),
               ),
               const SizedBox(height: 16),
@@ -257,7 +261,7 @@ class HomeScreen extends ConsumerWidget {
                     ),
                     SizedBox(height: 4),
                     Text(
-                      'Laporkan kerusakan fasilitas umum di sekitar Anda',
+                      'Laporkan kerusakan fasilitas yang Anda temui.',
                       style: TextStyle(color: Colors.white70, fontSize: 12),
                     ),
                   ],
@@ -277,27 +281,27 @@ class HomeScreen extends ConsumerWidget {
 
   Widget _buildBottomNav(BuildContext context, int currentIndex) {
     return NavigationBar(
-      backgroundColor: AppTheme.surface,
+      backgroundColor: Theme.of(context).cardColor,
       indicatorColor: AppTheme.primary.withOpacity(0.12),
       selectedIndex: currentIndex,
       onDestinationSelected: (index) {
         if (index == 1) context.go('/history');
         if (index == 2) context.go('/profile');
       },
-      destinations: const [
+      destinations: [
         NavigationDestination(
-          icon: Icon(Icons.home_outlined),
-          selectedIcon: Icon(Icons.home_rounded),
+          icon: Icon(Icons.home_outlined, color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.6)),
+          selectedIcon: const Icon(Icons.home_rounded, color: AppTheme.primary),
           label: 'Beranda',
         ),
         NavigationDestination(
-          icon: Icon(Icons.history_outlined),
-          selectedIcon: Icon(Icons.history_rounded),
+          icon: Icon(Icons.history_outlined, color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.6)),
+          selectedIcon: const Icon(Icons.history_rounded, color: AppTheme.primary),
           label: 'Riwayat',
         ),
         NavigationDestination(
-          icon: Icon(Icons.person_outlined),
-          selectedIcon: Icon(Icons.person_rounded),
+          icon: Icon(Icons.person_outline, color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.6)),
+          selectedIcon: const Icon(Icons.person_rounded, color: AppTheme.primary),
           label: 'Profil',
         ),
       ],
@@ -323,9 +327,9 @@ class _SummaryCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppTheme.surface,
+        color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppTheme.border),
+        border: Border.all(color: Theme.of(context).dividerColor),
       ),
       child: Row(
         children: [
@@ -351,9 +355,9 @@ class _SummaryCard extends StatelessWidget {
               ),
               Text(
                 label,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 11,
-                  color: AppTheme.textSecondary,
+                  color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.5),
                 ),
               ),
             ],

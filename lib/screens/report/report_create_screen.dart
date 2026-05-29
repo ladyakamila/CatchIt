@@ -21,17 +21,31 @@ class _ReportCreateScreenState extends ConsumerState<ReportCreateScreen> {
   final _formKey = GlobalKey<FormState>();
   final _titleCtrl = TextEditingController();
   final _descCtrl = TextEditingController();
-  final _addressCtrl = TextEditingController();
-  String? _selectedCategoryId;
+  
+  String? _selectedCategoryId; 
   final List<XFile> _images = [];
   bool _isLoading = false;
   String _loadingMessage = '';
+
+  String? _selectedRoom;
+
+  // Daftar Lokasi Ruangan Internal Sekolah (Bebas typo & ringkas)
+  final List<String> _schoolRooms = [
+    'Ruang Teori / Kelas',
+    'Laboratorium',
+    'Perpustakaan',
+    'Aula',
+    'Ruang Guru / Tata Usaha',
+    'Kantin Sekolah',
+    'Toilet Siswa / Guru',
+    'Lapangan Olahraga',
+    'Masjid',
+  ];
 
   @override
   void dispose() {
     _titleCtrl.dispose();
     _descCtrl.dispose();
-    _addressCtrl.dispose();
     super.dispose();
   }
 
@@ -66,6 +80,15 @@ class _ReportCreateScreenState extends ConsumerState<ReportCreateScreen> {
       );
       return;
     }
+    if (_selectedRoom == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Pilih lokasi ruangan terlebih dahulu'),
+          backgroundColor: AppTheme.warning,
+        ),
+      );
+      return;
+    }
 
     setState(() {
       _isLoading = true;
@@ -75,10 +98,10 @@ class _ReportCreateScreenState extends ConsumerState<ReportCreateScreen> {
     await ref
         .read(reportNotifierProvider.notifier)
         .createReport(
-          categoryId: _selectedCategoryId!,
+          categoryId: _selectedCategoryId!, 
           title: _titleCtrl.text.trim(),
           description: _descCtrl.text.trim(),
-          address: _addressCtrl.text.trim(),
+          address: _selectedRoom!, 
           imageFiles: _images,
           onProgress: (msg) {
             if (mounted) setState(() => _loadingMessage = msg);
@@ -119,7 +142,7 @@ class _ReportCreateScreenState extends ConsumerState<ReportCreateScreen> {
       isLoading: _isLoading,
       message: _loadingMessage,
       child: Scaffold(
-        backgroundColor: AppTheme.background,
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         appBar: AppBar(
           title: const Text('Buat Laporan'),
           leading: IconButton(
@@ -135,38 +158,54 @@ class _ReportCreateScreenState extends ConsumerState<ReportCreateScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _buildSectionLabel('Kategori'),
+                  _buildSectionLabel(context, 'Kategori Kerusakan'),
                   const SizedBox(height: 8),
+                  
                   categoriesAsync.when(
-                    data: (cats) => _CategoryDropdown(
-                      categories: cats,
-                      selectedId: _selectedCategoryId,
-                      onChanged: (id) =>
-                          setState(() => _selectedCategoryId = id),
-                    ),
+                    data: (cats) {
+                      // --- DI SINI PROSES FILTER KATEGORI NYA ---
+                      // Menyaring list kategori dari Supabase agar HANYA menampilkan 5 Kategori Sekolah saja
+                      final filteredCats = cats.where((cat) {
+                        return cat.name == 'Fasilitas Kelas & Belajar' ||
+                               cat.name == 'Kelistrikan & Lampu' ||
+                               cat.name == 'Sarana Kebersihan & Air' ||
+                               cat.name == 'Elektronik & Jaringan' ||
+                               cat.name == 'Gedung & Infrastruktur';
+                      }).toList();
+
+                      return _CategoryDropdown(
+                        categories: filteredCats, // Memasukkan hasil filter ke Dropdown
+                        selectedId: _selectedCategoryId,
+                        onChanged: (id) =>
+                            setState(() => _selectedCategoryId = id),
+                      );
+                    },
                     loading: () => const LinearProgressIndicator(),
                     error: (e, _) => Text(
                       'Gagal memuat kategori: $e',
                       style: const TextStyle(color: AppTheme.danger),
                     ),
                   ),
+                  
                   const SizedBox(height: 20),
-                  _buildSectionLabel('Judul Laporan'),
+                  _buildSectionLabel(context, 'Judul Laporan'),
                   const SizedBox(height: 8),
                   TextFormField(
                     controller: _titleCtrl,
+                    style: TextStyle(color: Theme.of(context).textTheme.bodyLarge?.color),
                     decoration: const InputDecoration(
-                      hintText: 'Contoh: Jalan berlubang depan pasar',
+                      hintText: 'Contoh: AC Bocor atau Plafon Retak',
                     ),
                     validator: (v) =>
                         (v == null || v.isEmpty) ? 'Judul wajib diisi' : null,
                   ),
                   const SizedBox(height: 20),
-                  _buildSectionLabel('Deskripsi'),
+                  _buildSectionLabel(context, 'Deskripsi Laporan'),
                   const SizedBox(height: 8),
                   TextFormField(
                     controller: _descCtrl,
                     maxLines: 4,
+                    style: TextStyle(color: Theme.of(context).textTheme.bodyLarge?.color),
                     decoration: const InputDecoration(
                       hintText: 'Jelaskan kerusakan secara detail...',
                       alignLabelWithHint: true,
@@ -176,19 +215,35 @@ class _ReportCreateScreenState extends ConsumerState<ReportCreateScreen> {
                         : null,
                   ),
                   const SizedBox(height: 20),
-                  _buildSectionLabel('Alamat / Lokasi'),
+                  
+                  _buildSectionLabel(context, 'Lokasi Ruangan / Area'),
                   const SizedBox(height: 8),
-                  TextFormField(
-                    controller: _addressCtrl,
+                  DropdownButtonFormField<String>(
+                    value: _selectedRoom,
+                    isExpanded: true,
+                    style: TextStyle(color: Theme.of(context).textTheme.bodyLarge?.color),
+                    dropdownColor: Theme.of(context).cardColor,
                     decoration: const InputDecoration(
-                      hintText: 'Masukkan alamat lengkap lokasi kerusakan',
+                      hintText: 'Pilih lokasi ruangan kerusakan',
                       prefixIcon: Icon(Icons.location_on_outlined),
                     ),
-                    validator: (v) =>
-                        (v == null || v.isEmpty) ? 'Alamat wajib diisi' : null,
+                    items: _schoolRooms.map((String room) {
+                      return DropdownMenuItem<String>(
+                        value: room,
+                        child: Text(
+                          room,
+                          style: TextStyle(color: Theme.of(context).textTheme.bodyLarge?.color),
+                        ),
+                      );
+                    }).toList(),
+                    onChanged: (value) {
+                      setState(() => _selectedRoom = value);
+                    },
+                    validator: (v) => (v == null) ? 'Lokasi area wajib dipilih' : null,
                   ),
+                  
                   const SizedBox(height: 20),
-                  _buildSectionLabel('Foto Kerusakan (maks. 5)'),
+                  _buildSectionLabel(context, 'Foto Kerusakan (maks. 5)'),
                   const SizedBox(height: 8),
                   ImageGridPicker(
                     images: _images,
@@ -210,13 +265,13 @@ class _ReportCreateScreenState extends ConsumerState<ReportCreateScreen> {
     );
   }
 
-  Widget _buildSectionLabel(String label) {
+  Widget _buildSectionLabel(BuildContext context, String label) {
     return Text(
       label,
-      style: const TextStyle(
+      style: TextStyle(
         fontSize: 14,
         fontWeight: FontWeight.w600,
-        color: AppTheme.textPrimary,
+        color: Theme.of(context).textTheme.bodyLarge?.color,
       ),
     );
   }
@@ -238,9 +293,17 @@ class _CategoryDropdown extends StatelessWidget {
     return DropdownButtonFormField<String>(
       value: selectedId,
       isExpanded: true,
+      style: TextStyle(color: Theme.of(context).textTheme.bodyLarge?.color),
+      dropdownColor: Theme.of(context).cardColor,
       decoration: const InputDecoration(hintText: 'Pilih kategori'),
       items: categories.map((cat) {
-        return DropdownMenuItem(value: cat.id, child: Text(cat.name));
+        return DropdownMenuItem(
+          value: cat.id, 
+          child: Text(
+            cat.name, 
+            style: TextStyle(color: Theme.of(context).textTheme.bodyLarge?.color)
+          ),
+        );
       }).toList(),
       onChanged: onChanged,
     );
